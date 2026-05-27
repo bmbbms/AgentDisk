@@ -61,6 +61,40 @@ make build
 make docker-up
 ```
 
+### 2.1 Docker Compose 本地联调
+
+新分支已提供完整的本地联调 compose，包含：
+- AgentDisk 后端
+- MySQL 8
+- MinIO
+- 测试网关
+- Web 前端
+
+启动：
+
+```bash
+cd docker
+docker compose up --build
+```
+
+访问地址：
+
+- 后端: `http://localhost:9100`
+- 测试网关: `http://localhost:3100`
+- 默认测试账户直达: `http://localhost:3100/login/default`
+- Web 前端: `http://localhost:9101`
+- MinIO Console: `http://localhost:9001`
+
+可选环境变量：
+
+```bash
+export DB_PASSWORD=agentdisk123
+export OSS_ACCESS_KEY=minioadmin
+export OSS_SECRET_KEY=minioadmin
+export JWT_SECRET=dev-jwt-secret-for-testing-only
+export DL_TOKEN_SECRET=dev-dl-token-secret-for-testing
+```
+
 ### 3. 本地开发（前后端联调）
 
 需要同时启动三个服务：

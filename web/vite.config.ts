@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
 
+const proxyTarget = process.env.VITE_PROXY_TARGET || 'http://localhost:9100'
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -13,15 +15,15 @@ export default defineConfig({
     port: 9101,
     proxy: {
       '/v1': {
-        target: 'http://localhost:9100',
+        target: proxyTarget,
         changeOrigin: true,
       },
       '/auth': {
-        target: 'http://localhost:9100',
+        target: proxyTarget,
         changeOrigin: true,
       },
       '/health': {
-        target: 'http://localhost:9100',
+        target: proxyTarget,
         changeOrigin: true,
       },
     },

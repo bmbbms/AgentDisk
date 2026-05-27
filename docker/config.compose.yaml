@@ -1,0 +1,50 @@
+server:
+  port: 9100
+  mode: release
+
+database:
+  driver: mysql
+  host: mysql
+  port: 3306
+  name: agentdisk
+  user: root
+  max_idle_conns: 10
+  max_open_conns: 100
+  log_level: warn
+
+oss:
+  endpoint: "minio:9000"
+  bucket: "agentdisk"
+  use_ssl: false
+  region: "default"
+
+redis:
+  enabled: false
+  addr: "redis:6379"
+  db: 0
+
+jwt:
+  secret: "dev-jwt-secret-for-testing-only"
+  expire_hours: 72
+
+log:
+  level: info
+  output: stdout
+  file_path: logs/agentdisk.log
+
+oauth2:
+  enabled: true
+  client_id: "agentdisk"
+  client_secret: "agentdisk-secret"
+  auth_url: "http://gateway:3100/oauth2/authorize"
+  token_url: "http://gateway:3100/oauth2/token"
+  userinfo_url: "http://gateway:3100/oauth2/userinfo"
+  redirect_url: "http://localhost:9100/auth/callback"
+  frontend_url: "http://localhost:9101"
+  scopes:
+    - openid
+    - profile
+
+download_token:
+  secret: "dev-dl-token-secret-for-testing"
+  expire_seconds: 300

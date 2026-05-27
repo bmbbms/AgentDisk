@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -12,6 +12,6 @@ WORKDIR /app
 COPY --from=builder /app/agentdisk .
 COPY config.yaml .
 
-EXPOSE 8080
+EXPOSE 9100
 ENTRYPOINT ["./agentdisk"]
 CMD ["--config", "config.yaml"]
