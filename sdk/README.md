@@ -38,6 +38,38 @@ result = client.preview("docs/reports/summary.md")
 client.close()
 ```
 
+### Default Test Authorization
+
+For local verification, the SDK can generate a valid test JWT instead of requiring
+you to paste a token manually.
+
+```python
+from agentdisk import AgentDiskClient
+
+client = AgentDiskClient.from_test_auth(
+    base_url="http://localhost:9100",
+    user_id="sdk-test-user",
+)
+
+space = client.get_space()
+client.close()
+```
+
+You can also generate the token yourself:
+
+```python
+from agentdisk import create_test_token
+
+token = create_test_token(
+    user_id="sdk-test-user",
+    agent_id="sdk-test-agent",
+    agent_group_id="sdk-test-group",
+)
+```
+
+By default this uses `AGENTDISK_JWT_SECRET` if present, otherwise it falls back to
+the local development secret `dev-jwt-secret-for-testing-only`.
+
 ### Asynchronous Client
 
 ```python
@@ -50,6 +82,18 @@ async with AsyncAgentDiskClient(
     await client.create_folder("docs/reports")
     await client.upload_file("docs/reports/summary.md", "/local/summary.md")
     files = await client.list_files("docs/reports")
+```
+
+Async clients support the same helper:
+
+```python
+from agentdisk import AsyncAgentDiskClient
+
+async with AsyncAgentDiskClient.from_test_auth(
+    base_url="http://localhost:9100",
+    user_id="sdk-test-user",
+) as client:
+    await client.get_space()
 ```
 
 ## API Overview

@@ -18,6 +18,7 @@ from .api import (
     _TagAPI,
     _VersionAPI,
 )
+from .auth import create_test_token
 
 if TYPE_CHECKING:
     import builtins
@@ -64,6 +65,38 @@ class AgentDiskClient:
         self._preview = _PreviewAPI(self._http, token)
         self._space = _SpaceAPI(self._http, token)
         self._resolver = _PathResolver(self._folders, self._files, cache_ttl=cache_ttl)
+
+    @classmethod
+    def from_test_auth(
+        cls,
+        base_url: str,
+        *,
+        secret: str | None = None,
+        user_id: str = "sdk-test-user",
+        agent_id: str = "",
+        agent_group_id: str = "",
+        expire_hours: int = 72,
+        timeout: float = 30.0,
+        cache_ttl: float = 60.0,
+    ) -> AgentDiskClient:
+        """Create a client with a generated local-test JWT.
+
+        This is intended for development and integration verification only.
+        """
+
+        token = create_test_token(
+            secret=secret,
+            user_id=user_id,
+            agent_id=agent_id,
+            agent_group_id=agent_group_id,
+            expire_hours=expire_hours,
+        )
+        return cls(
+            base_url=base_url,
+            token=token,
+            timeout=timeout,
+            cache_ttl=cache_ttl,
+        )
 
     # --- Folder operations ---
 

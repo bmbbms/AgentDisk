@@ -7,7 +7,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       display: flex;
@@ -17,7 +17,7 @@
     .login-card {
       background: #fff;
       border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
       padding: 40px;
       width: 400px;
       max-width: 90vw;
@@ -76,6 +76,12 @@
       transition: opacity 0.2s;
     }
     button:hover { opacity: 0.9; }
+    .secondary-btn {
+      margin-top: 12px;
+      background: #f4f6ff;
+      color: #4c5fc4;
+      border: 1px solid #cfd7ff;
+    }
     .test-accounts {
       margin-top: 24px;
       padding-top: 20px;
@@ -105,18 +111,20 @@
     <form id="loginForm">
       <div class="form-group">
         <label for="userId">用户 ID</label>
-        <input type="text" id="userId" name="userId" placeholder="例如 user001" required autocomplete="username">
+        <input type="text" id="userId" name="userId" value="5001185" placeholder="例如 user001" required autocomplete="username">
       </div>
       <div class="form-group">
         <label for="password">密码</label>
-        <input type="password" id="password" name="password" placeholder="输入密码" required autocomplete="current-password">
+        <input type="password" id="password" name="password" value="123456" placeholder="输入密码" required autocomplete="current-password">
       </div>
       <button type="submit">登 录</button>
+      <button type="button" class="secondary-btn" id="defaultLoginBtn">使用默认测试账户</button>
     </form>
 
     <div class="test-accounts">
       <h3>测试账号</h3>
       <table>
+        <tr><td>5001185 (默认)</td><td>123456</td></tr>
         <tr><td>user001 (张三)</td><td>test123</td></tr>
         <tr><td>user002 (李四)</td><td>test123</td></tr>
         <tr><td>user003 (王五)</td><td>test123</td></tr>
@@ -154,11 +162,15 @@
           el.textContent = data.message || '登录失败';
           el.style.display = 'block';
         }
-      } catch (err) {
+      } catch (_err) {
         const el = document.getElementById('errorMsg');
         el.textContent = '网络错误，请重试';
         el.style.display = 'block';
       }
+    });
+
+    document.getElementById('defaultLoginBtn').addEventListener('click', () => {
+      window.location.href = `/login/default?returnTo=${encodeURIComponent(returnTo)}`;
     });
   </script>
 </body>

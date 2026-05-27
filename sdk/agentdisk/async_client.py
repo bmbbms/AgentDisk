@@ -18,6 +18,7 @@ from .api import (
     _AsyncTagAPI,
     _AsyncVersionAPI,
 )
+from .auth import create_test_token
 
 if TYPE_CHECKING:
     import builtins
@@ -63,6 +64,35 @@ class AsyncAgentDiskClient:
         self._preview = _AsyncPreviewAPI(self._http, token)
         self._space = _AsyncSpaceAPI(self._http, token)
         self._resolver = _AsyncPathResolver(self._folders, self._files, cache_ttl=cache_ttl)
+
+    @classmethod
+    def from_test_auth(
+        cls,
+        base_url: str,
+        *,
+        secret: str | None = None,
+        user_id: str = "sdk-test-user",
+        agent_id: str = "",
+        agent_group_id: str = "",
+        expire_hours: int = 72,
+        timeout: float = 30.0,
+        cache_ttl: float = 60.0,
+    ) -> AsyncAgentDiskClient:
+        """Create an async client with a generated local-test JWT."""
+
+        token = create_test_token(
+            secret=secret,
+            user_id=user_id,
+            agent_id=agent_id,
+            agent_group_id=agent_group_id,
+            expire_hours=expire_hours,
+        )
+        return cls(
+            base_url=base_url,
+            token=token,
+            timeout=timeout,
+            cache_ttl=cache_ttl,
+        )
 
     # --- Folder operations ---
 
