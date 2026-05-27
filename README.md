@@ -95,6 +95,14 @@ export JWT_SECRET=dev-jwt-secret-for-testing-only
 export DL_TOKEN_SECRET=dev-dl-token-secret-for-testing
 ```
 
+如果你之前已经用旧版 compose 启动过一次 MySQL，建议先重建数据卷，让应用用户初始化生效：
+
+```bash
+cd docker
+docker compose down -v
+docker compose up --build
+```
+
 ### 3. 本地开发（前后端联调）
 
 需要同时启动三个服务：

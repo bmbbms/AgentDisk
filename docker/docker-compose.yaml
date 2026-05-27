@@ -5,6 +5,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-agentdisk123}
       MYSQL_DATABASE: agentdisk
+      MYSQL_USER: agentdisk
+      MYSQL_PASSWORD: ${DB_PASSWORD:-agentdisk123}
     ports:
       - "3306:3306"
     volumes:

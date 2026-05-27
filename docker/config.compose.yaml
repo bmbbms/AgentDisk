@@ -7,7 +7,7 @@ database:
   host: mysql
   port: 3306
   name: agentdisk
-  user: root
+  user: agentdisk
   max_idle_conns: 10
   max_open_conns: 100
   log_level: warn
