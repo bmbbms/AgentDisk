@@ -341,7 +341,7 @@ pre { background: #16213e; padding: 16px; border-radius: 4px; overflow-x: auto; 
 <h1>OAuth2 Debugger</h1>
 <p>模拟发起 OAuth2 授权请求</p>
 <div class="form-group"><label>Client ID</label><input id="clientId" value="agentdisk"></div>
-<div class="form-group"><label>Redirect URI</label><input id="redirectUri" value="http://localhost:9101/auth/callback"></div>
+<div class="form-group"><label>Redirect URI</label><input id="redirectUri" value=""></div>
 <div class="form-group"><label>Scope</label><input id="scope" value="openid profile"></div>
 <div class="form-group"><label>State</label><input id="state" value="test-state"></div>
 <div class="form-group"><label>Code Challenge (optional)</label><input id="codeChallenge" value=""></div>
@@ -349,6 +349,9 @@ pre { background: #16213e; padding: 16px; border-radius: 4px; overflow-x: auto; 
 <button onclick="startAuth()">发起授权</button>
 <pre id="result"></pre>
 <script>
+const debugHost = window.location.hostname || 'localhost';
+document.getElementById('redirectUri').value = 'http://' + debugHost + ':9101/auth/callback';
+
 function startAuth() {
   const params = new URLSearchParams({
     response_type: 'code',

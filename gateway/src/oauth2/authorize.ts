@@ -13,6 +13,31 @@ const CLIENT: OAuth2Client = {
   ],
 };
 
+function getAllowedRedirectUris(req: Request): string[] {
+  const forwardedHost = req.headers['x-forwarded-host'];
+  const requestHost =
+    typeof forwardedHost === 'string' && forwardedHost !== ''
+      ? forwardedHost.split(',')[0].trim().split(':')[0]
+      : req.hostname;
+
+  const hosts = new Set([
+    'localhost',
+    '127.0.0.1',
+    requestHost,
+  ]);
+
+  const redirectUris = new Set(CLIENT.redirectUris);
+  for (const host of hosts) {
+    if (!host) {
+      continue;
+    }
+    redirectUris.add(`http://${host}:9100/auth/callback`);
+    redirectUris.add(`http://${host}:9101/auth/callback`);
+  }
+
+  return Array.from(redirectUris);
+}
+
 export function handleAuthorize(req: Request, res: Response): void {
   const {
     response_type,
@@ -32,7 +57,7 @@ export function handleAuthorize(req: Request, res: Response): void {
   }
 
   // 验证 redirect_uri
-  if (!redirect_uri || !CLIENT.redirectUris.includes(redirect_uri)) {
+  if (!redirect_uri || !getAllowedRedirectUris(req).includes(redirect_uri)) {
     res.status(400).json({ error: 'invalid_request', message: 'Invalid redirect_uri' });
     return;
   }
