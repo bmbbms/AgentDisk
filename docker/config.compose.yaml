@@ -36,7 +36,7 @@ oauth2:
   enabled: true
   client_id: "agentdisk"
   client_secret: "agentdisk-secret"
-  auth_url: "http://gateway:3100/oauth2/authorize"
+  auth_url: "http://localhost:3100/oauth2/authorize"
   token_url: "http://gateway:3100/oauth2/token"
   userinfo_url: "http://gateway:3100/oauth2/userinfo"
   redirect_url: "http://localhost:9100/auth/callback"

@@ -185,9 +185,10 @@
 
   <script>
     function buildRuntimeUrls() {
-      const protocol = window.location.protocol;
-      const hostname = window.location.hostname;
-      const gatewayOrigin = window.location.origin;
+      const isFileProtocol = window.location.protocol === 'file:';
+      const protocol = isFileProtocol ? 'http:' : window.location.protocol;
+      const hostname = isFileProtocol ? 'localhost' : (window.location.hostname || 'localhost');
+      const gatewayOrigin = isFileProtocol ? 'http://localhost:3100' : window.location.origin;
       const webOrigin = `${protocol}//${hostname}:9101`;
 
       document.getElementById('agentdiskLink').href = webOrigin;
