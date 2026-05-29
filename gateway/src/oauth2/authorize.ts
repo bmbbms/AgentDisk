@@ -3,14 +3,14 @@ import * as codeStore from '../store/codes.js';
 import * as userStore from '../store/users.js';
 import { generateCode } from './pkce.js';
 import type { OAuth2Client, SessionUser } from './types.js';
+import { getGatewayRuntimeConfig } from '../runtime-config.js';
+
+const runtime = getGatewayRuntimeConfig();
 
 const CLIENT: OAuth2Client = {
-  clientId: 'agentdisk',
-  clientSecret: 'agentdisk-secret',
-  redirectUris: [
-    'http://localhost:9101/auth/callback',
-    'http://localhost:9100/auth/callback',
-  ],
+  clientId: runtime.oauthClientId,
+  clientSecret: runtime.oauthClientSecret,
+  redirectUris: runtime.oauthRedirectUris,
 };
 
 export function handleAuthorize(req: Request, res: Response): void {
@@ -114,7 +114,7 @@ function issueCodeAndRedirect(
   const code = generateCode();
   codeStore.store({
     code,
-    clientId: 'agentdisk',
+    clientId: CLIENT.clientId,
     redirectUri,
     userId,
     codeChallenge: codeChallenge || '',

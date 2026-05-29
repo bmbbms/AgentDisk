@@ -12,9 +12,11 @@ import * as token from './oauth2/token.js';
 import * as userinfo from './oauth2/userinfo.js';
 import { generateSessionId } from './oauth2/pkce.js';
 import type { SessionUser } from './oauth2/types.js';
+import { getGatewayRuntimeConfig } from './runtime-config.js';
 
 const app = express();
-const PORT = 3100;
+const runtime = getGatewayRuntimeConfig();
+const PORT = runtime.gatewayPort;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -40,8 +42,21 @@ app.use(sessionMiddleware);
 function serveView(name: string) {
   return (_req: express.Request, res: express.Response) => {
     const filePath = path.join(__dirname, 'views', name);
-    res.type('html').send(fs.readFileSync(filePath, 'utf-8'));
+    res.type('html').send(renderView(fs.readFileSync(filePath, 'utf-8')));
   };
+}
+
+function renderView(template: string): string {
+  return template
+    .replaceAll('__WEB_BASE_URL__', runtime.webBaseUrl)
+    .replaceAll('__GATEWAY_PUBLIC_URL__', runtime.gatewayPublicUrl)
+    .replaceAll('__OAUTH2_CLIENT_ID__', runtime.oauthClientId)
+    .replaceAll('__OAUTH2_AUTHORIZE_URL__', runtime.oauthAuthorizeUrl)
+    .replaceAll('__OAUTH2_TOKEN_URL__', runtime.oauthTokenUrl)
+    .replaceAll('__OAUTH2_USERINFO_URL__', runtime.oauthUserInfoUrl)
+    .replaceAll('__OAUTH2_REDIRECT_URI__', runtime.oauthDefaultRedirectUri)
+    .replaceAll('__OAUTH2_SCOPES__', runtime.oauthScopes.join(', '))
+    .replaceAll('__DEFAULT_AGENT_ENDPOINT__', runtime.defaultAgentEndpoint);
 }
 
 // Page routes
@@ -65,7 +80,7 @@ app.get('/static/chat-styles.css', (_req, res) => {
 
 const JWT_SECRET = 'dev-jwt-secret-for-testing-only';
 
-// SSE proxy: /process -> http://localhost:8090/process
+// SSE proxy: /process -> configured agent endpoint
 app.all('/process', (req, res) => {
   const user: SessionUser | undefined = (req as any).sessionUser;
   if (!user) {
@@ -89,7 +104,7 @@ app.all('/process', (req, res) => {
 
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '72h' });
 
-  // Resolve target endpoint: agent-specific full URL > default localhost:8090/process
+  // Resolve target endpoint: agent-specific full URL > configured default endpoint
   let targetUrl: URL;
   if (agentId) {
     const agent = agentStore.findByAgentId(agentId);
@@ -99,7 +114,7 @@ app.all('/process', (req, res) => {
       } catch { /* keep default */ }
     }
   }
-  targetUrl ??= new URL('http://localhost:8090/process');
+  targetUrl ??= new URL(runtime.defaultAgentEndpoint);
 
   const proxyReq = http.request(
     {
@@ -284,9 +299,9 @@ pre { background: #16213e; padding: 16px; border-radius: 4px; overflow-x: auto; 
 </style></head><body>
 <h1>OAuth2 Debugger</h1>
 <p>模拟发起 OAuth2 授权请求</p>
-<div class="form-group"><label>Client ID</label><input id="clientId" value="agentdisk"></div>
-<div class="form-group"><label>Redirect URI</label><input id="redirectUri" value="http://localhost:9101/auth/callback"></div>
-<div class="form-group"><label>Scope</label><input id="scope" value="openid profile"></div>
+<div class="form-group"><label>Client ID</label><input id="clientId" value="${runtime.oauthClientId}"></div>
+<div class="form-group"><label>Redirect URI</label><input id="redirectUri" value="${runtime.oauthDefaultRedirectUri}"></div>
+<div class="form-group"><label>Scope</label><input id="scope" value="${runtime.oauthScopes.join(' ')}"></div>
 <div class="form-group"><label>State</label><input id="state" value="test-state"></div>
 <div class="form-group"><label>Code Challenge (optional)</label><input id="codeChallenge" value=""></div>
 <div class="form-group"><label>Prompt</label><select id="prompt"><option value="">默认</option><option value="none">none (无感)</option></select></div>
@@ -325,8 +340,8 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Agent 网关已启动: http://localhost:${PORT}`);
-  console.log(`  登录页:     http://localhost:${PORT}/login`);
-  console.log(`  仪表盘:     http://localhost:${PORT}/dashboard`);
-  console.log(`  OAuth2 调试: http://localhost:${PORT}/oauth2/debug`);
+  console.log(`Agent 网关已启动: ${runtime.gatewayPublicUrl}`);
+  console.log(`  登录页:     ${runtime.gatewayPublicUrl}/login`);
+  console.log(`  仪表盘:     ${runtime.gatewayPublicUrl}/dashboard`);
+  console.log(`  OAuth2 调试: ${runtime.gatewayPublicUrl}/oauth2/debug`);
 });
