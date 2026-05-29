@@ -6,21 +6,119 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     ports:
-      - "8080:8080"
+      - "9100:8080"
     depends_on:
       mysql:
         condition: service_healthy
       minio:
         condition: service_healthy
+    env_file:
+      - ../.env
     environment:
-      - DB_HOST=mysql
-      - DB_PASSWORD=${DB_PASSWORD:-agentdisk123}
-      - OSS_ENDPOINT=minio:9000
-      - OSS_ACCESS_KEY=${OSS_ACCESS_KEY:-minioadmin}
-      - OSS_SECRET_KEY=${OSS_SECRET_KEY:-minioadmin}
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      DB_HOST: mysql
+      DB_PASSWORD: ${DB_PASSWORD:-agentdisk123}
+      OSS_ENDPOINT: minio:9000
+      OSS_ACCESS_KEY: ${OSS_ACCESS_KEY:-minioadmin}
+      OSS_SECRET_KEY: ${OSS_SECRET_KEY:-minioadmin}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        cat >/tmp/config.yaml <<EOF
+        server:
+          port: 8080
+          mode: release
+        database:
+          host: mysql
+          port: 3306
+          name: agentdisk
+          user: root
+          password: "$$DB_PASSWORD"
+          max_idle_conns: 10
+          max_open_conns: 100
+          log_level: warn
+        oss:
+          endpoint: minio:9000
+          access_key: "$$OSS_ACCESS_KEY"
+          secret_key: "$$OSS_SECRET_KEY"
+          bucket: agentdisk
+          use_ssl: false
+          region: default
+        redis:
+          enabled: false
+          addr: redis:6379
+          password: ""
+          db: 0
+        jwt:
+          secret: "$$JWT_SECRET"
+          expire_hours: 72
+        log:
+          level: info
+          output: stdout
+          file_path: logs/agentdisk.log
+        oauth2:
+          enabled: true
+          client_id: agentdisk
+          client_secret: agentdisk-secret
+          auth_url: http://localhost:3100/oauth2/authorize
+          token_url: http://localhost:3100/oauth2/token
+          userinfo_url: http://localhost:3100/oauth2/userinfo
+          redirect_url: http://localhost:9100/auth/callback
+          frontend_url: http://localhost:9101
+          scopes:
+            - openid
+            - profile
+        download_token:
+          secret: "$${DOWNLOAD_TOKEN_SECRET:-dev-dl-token-secret-for-testing}"
+          expire_seconds: 300
+        EOF
+        exec ./agentdisk --config /tmp/config.yaml
     volumes:
       - ../config.yaml:/app/config.yaml
+    restart: unless-stopped
+
+  gateway:
+    image: node:20-alpine
+    working_dir: /app/gateway
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3100:3100"
+    depends_on:
+      agentdisk:
+        condition: service_started
+    env_file:
+      - ../.env
+    environment:
+      GATEWAY_PORT: "3100"
+      GATEWAY_PUBLIC_URL: http://localhost:3100
+      GATEWAY_WEB_URL: http://localhost:9101
+      GATEWAY_DEFAULT_AGENT_ENDPOINT: http://localhost:8090/process
+      GATEWAY_OAUTH_CLIENT_ID: agentdisk
+      GATEWAY_OAUTH_CLIENT_SECRET: agentdisk-secret
+      GATEWAY_OAUTH_REDIRECT_URIS: http://localhost:9101/auth/callback,http://localhost:9100/auth/callback
+      GATEWAY_OAUTH_DEFAULT_REDIRECT_URI: http://localhost:9101/auth/callback
+      GATEWAY_OAUTH_SCOPES: openid,profile
+    volumes:
+      - ../gateway:/app/gateway
+    restart: unless-stopped
+
+  web:
+    image: node:20-alpine
+    working_dir: /app/web
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 9101"
+    ports:
+      - "9101:9101"
+    depends_on:
+      agentdisk:
+        condition: service_started
+    env_file:
+      - ../.env
+    environment:
+      VITE_BACKEND_BASE_URL: http://agentdisk:8080
+    volumes:
+      - ../web:/app/web
+    restart: unless-stopped
 
   mysql:
     image: mysql:8.0
@@ -61,6 +159,7 @@ services:
       - "6379:6379"
     profiles:
       - redis
+    restart: unless-stopped
 
 volumes:
   mysql_data:
